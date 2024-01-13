@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Action Recognition</title>
+    <style>
+        #video-container {
+            position: relative;
+        }
+
+        #recognized-action {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="video-container">
+        <video id="video-feed" width="640" height="480" autoplay playsinline></video>
+        <div id="recognized-action"></div>
+    </div>
+
+    <script>
+        const videoElement = document.getElementById('video-feed');
+        const recognizedActionElement = document.getElementById('recognized-action');
+
+        // Check for browser support
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({
+                video: true
+            }).then(function (stream) {
+                // Set the video source and play
+                videoElement.srcObject = stream;
+                videoElement.play();
+            }).catch(function (error) {
+                console.error('Error accessing webcam:', error);
+            });
+        } else {
+            console.error('getUserMedia is not supported in this browser.');
+        }
+
+        // Function to update recognized action on the page
+        function updateRecognizedAction(action) {
+            recognizedActionElement.textContent = 'Recognized Action: ' + action;
+        }
+
+        // EventSource for real-time updates
+        const eventSource = new EventSource('/recognize_action');
+
+        eventSource.onmessage = function (event) {
+            const frameData = JSON.parse(event.data);
+
+            // Update recognized action on the page
+            updateRecognizedAction(frameData.action);
+        };
+
+        // Handle errors
+        eventSource.onerror = function (error) {
+            console.error('EventSource failed:', error);
+            eventSource.close();
+        };
+    </script>
+</body>
+
+</html>
